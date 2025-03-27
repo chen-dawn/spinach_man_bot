@@ -196,8 +196,32 @@ def extract_url(text):
         logger.error(f"Error extracting URL: {str(e)}", exc_info=True)
         return None
 
+def find_full_text_version_biorxiv(url):
+    # The full text URL is something like https://www.biorxiv.org/content/10.1101/2025.03.14.643253v1.full (with the .full at the end)
+    # First strip the url and remove all the params and tokens. 
+    stripped_url = re.sub(r'\?.*', '', url)
+    logger.info(f"Stripped URL: {stripped_url}")
+    # If the url ends with .full, then we just return the url.
+    if stripped_url.endswith('.full'):
+        return url
+    # Otherwise, we need to find the full text version.
+    # first try to see if this url works. 
+    try:
+        response = requests.get(url + '.full', timeout=10)
+        if response.status_code == 200:
+            return url + '.full'
+    except Exception as e:
+        logger.error(f"Error finding full text version: {str(e)}", exc_info=True)
+        return url
+        
 def fetch_and_summarize(url):
     logger.info(f"Fetching and summarizing URL: {url}")
+    
+    # if url is from biorxiv, then we want to find if there is a full text version. 
+    if 'biorxiv.org' in url:
+        logger.info("URL is from BioRxiv, checking for full text version")
+        url = find_full_text_version_biorxiv(url)
+    
     try:
         # Add user-agent header to mimic a browser request
         headers = {
