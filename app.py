@@ -151,7 +151,10 @@ def fetch_and_summarize(url):
         response = requests.get(url, headers=headers, timeout=10)
         
         if response.status_code != 200:
-            return f"Unable to access the webpage. Status code: {response.status_code}"
+            if response.status_code == 403 and 'www.cell.com' in url:
+                return f"Unfortunately this bot doesn't work for Cell Press articles. They have a very good bot blocker :cry:"
+            else:
+                return f"Unable to access the webpage. Status code: {response.status_code}"
             
         soup = BeautifulSoup(response.content, 'html.parser')
         
