@@ -100,6 +100,7 @@ def handle_message(event):
     user = event.get('user', '')
     channel = event.get('channel', '')
     thread_ts = event.get('thread_ts', None)  # Get thread timestamp if message is in a thread
+    message_ts = event.get('ts', '')  # Get the timestamp of the current message
     # print("----------text----------------------")
     # print(text)
     # print("--------------------------------")
@@ -115,8 +116,10 @@ def handle_message(event):
         # Fetch and summarize the content
         summary = fetch_and_summarize(url)
         if summary:
-            # Post the summary back to the same Slack channel and thread if applicable
-            post_summary_to_slack(channel, user, summary, thread_ts)
+            # If the message is already in a thread, use that thread_ts
+            # If not, use the message's own timestamp to create a new thread
+            reply_thread_ts = thread_ts if thread_ts else message_ts
+            post_summary_to_slack(channel, user, summary, reply_thread_ts)
 
 def extract_url(text):
     # Simple URL extraction logic
