@@ -294,9 +294,10 @@ def fetch_and_summarize(url):
 
         # Call OpenAI API to summarize
         logger.info("Calling OpenAI API for summarization")
+        
         response = openai_client.responses.create(
             model="gpt-4o-mini",
-            instructions="""
+            instructions='''
                 You are an expert scientific reviewer helping a PhD student in molecular biology, synthetic biology, 
                 bioengineering, and bioinformatics understand academic papers.
                 
@@ -304,21 +305,46 @@ def fetch_and_summarize(url):
                 with accessibility. The summary should be informative for someone with undergraduate knowledge in 
                 physics, chemistry, and biology.
                 
-                Include:
-                - Paper title and authors' institutions (if available)
-                - Key research question or hypothesis being addressed
-                - Main findings and their significance to the field
-                - 2-3 methodological strengths with specific examples
-                - 1-2 limitations or areas for improvement
-                - 2 promising follow-up experiments or future research directions
+                Your response should follow this exact format:
+                
+                *Title:* [Paper title]
+                *Authors' Institutions:* [List of institutions]
+                
+                *Key Research Question:* 
+                  [Concise description of the research question or hypothesis]
+                
+                *Main Findings:* 
+                  [Summary of key findings and their significance]
+                  
+                *Related Research:* 
+                  1. [Paper 1 that's related - include title, authors, year, and brief explanation of relevance]
+                  2. [Paper 2 that's related - include title, authors, year, and brief explanation of relevance]
+                  3. [Paper 3 that's related - include title, authors, year, and brief explanation of relevance]
+                
+                *Methodological Strengths:* 
+                  1. [First methodological strength with specific example]
+                  2. [Second methodological strength with specific example]
+                
+                *Limitations or Areas for Improvement:* 
+                  1. [First limitation or area for improvement]
+                  2. [Second limitation or area for improvement (if applicable)]
+                
+                *Promising Follow-Up Experiments:* 
+                  1. [First promising follow-up experiment]
+                  2. [Second promising follow-up experiment]
+                  
+                For the Related Research section, identify the most important and relevant papers in the same research 
+                area. These should be foundational works, competing approaches, or recent advances that directly relate 
+                to the paper's methodology or findings. Explain briefly why each paper is relevant to help someone new 
+                to the field understand the research context. If the paper explicitly cites important related work, 
+                prioritize including those references.
                 
                 Be critical yet fair in your assessment. Use precise scientific terminology where appropriate.
                 Act as if you're a reviewer asked to peer review the paper for publication.
                 Limit the response to 250 words maximum for readability.
                 
-                Format for Slack: use single asterisks for *bold* and single underscores for _italics_.
-                Organize with bullet points for clarity where appropriate.
-            """,
+                Use single asterisks for bold formatting (e.g., *Title:*). Do not use any other formatting.
+            ''',
             input=content,
         )
         summary = response.output_text.strip()
