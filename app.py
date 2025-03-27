@@ -60,7 +60,7 @@ def slack_events():
 
     if 'event' in data:
         event = data['event']
-        print(event)  # Debug: Print the full event
+        # print(event)  # Debug: Print the full event
         
         # Skip message_changed events and bot messages
         if event.get('subtype') == 'message_changed' or event.get('bot_id'):
@@ -99,9 +99,10 @@ def handle_message(event):
     text = event.get('text', '')
     user = event.get('user', '')
     channel = event.get('channel', '')
-    print("----------text----------------------")
-    print(text)
-    print("--------------------------------")
+    thread_ts = event.get('thread_ts', None)  # Get thread timestamp if message is in a thread
+    # print("----------text----------------------")
+    # print(text)
+    # print("--------------------------------")
     
     # Check for URLs in Slack's angle bracket format
     url_match = re.search(r'<(https?://[^>]+)>', text)
@@ -114,8 +115,8 @@ def handle_message(event):
         # Fetch and summarize the content
         summary = fetch_and_summarize(url)
         if summary:
-            # Post the summary back to the same Slack channel
-            post_summary_to_slack(channel, user, summary)
+            # Post the summary back to the same Slack channel and thread if applicable
+            post_summary_to_slack(channel, user, summary, thread_ts)
 
 def extract_url(text):
     # Simple URL extraction logic
@@ -124,9 +125,9 @@ def extract_url(text):
 
 def fetch_and_summarize(url):
     output = f"you have entered the url: {url}"
-    print("-------------------------------- ")
-    print(output)
-    print("--------------------------------")
+    # print("-------------------------------- ")
+    # print(output)
+    # print("--------------------------------")
     # return output
     try:
         response = requests.get(url)
@@ -151,7 +152,7 @@ def fetch_and_summarize(url):
         # Call OpenAI API to summarize
         response = openai_client.responses.create(
             model="gpt-4o-mini",
-            instructions="I am a junior PhD student in molecular biology. I want you to summarize the following academic paper webpage. Give me the main findings and the key points. Limit the response to 200 words. I am also posting this message to slack, so make sure to format it correctly. It only accepts single asterisks for bold and single underscores for italics. Do not use other formatting options.",
+            instructions="I am a junior PhD student in molecular biology, synthetic biology, bioengineering, and bioinfomatics. I have a basic understanding of all of these fields, but I am not an expert. I want you to summarize the following academic paper webpage. Give me the main findings and the key points, and also why this paper is important in the field. Include necessary background information. Limit the response to 200 words. I am also posting this message to slack, so make sure to format it correctly. It only accepts single asterisks for bold and single underscores for italics. Do not use other formatting options. You need to follow these formmating instructions.",
             input=content,
         )
         return response.output_text.strip()
@@ -159,11 +160,12 @@ def fetch_and_summarize(url):
         print(f"Error fetching or summarizing content: {e}")
         return f"I encountered an error when trying to access or process the content: {str(e)}"
 
-def post_summary_to_slack(channel, user, summary):
+def post_summary_to_slack(channel, user, summary, thread_ts=None):
     try:
         slack_client.chat_postMessage(
             channel=channel,
-            text=f"<@{user}> Here's the summary of the linked paper:\n{summary}"
+            text=f"<@{user}> Here's the summary of the linked paper:\n{summary}",
+            thread_ts=thread_ts  # This will post in the thread if thread_ts is provided
         )
     except SlackApiError as e:
         print(f"Error posting message to Slack: {e.response['error']}")
